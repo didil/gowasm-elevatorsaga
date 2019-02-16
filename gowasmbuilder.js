@@ -1,9 +1,9 @@
-
 window.GoWasmBuilder = {
     exitWasm: null,
     codeObj: null,
     mod: null,
     inst: null,
+    apiRoot: null,
     async init(bytes) {
         GoWasmBuilder.go = new Go();
 
@@ -15,7 +15,7 @@ window.GoWasmBuilder = {
         GoWasmBuilder.go.run(GoWasmBuilder.inst)
     },
     async getCodeObjFromCode(code) {
-        let resp = await fetch("http://localhost:3000/api/v1/compile", {
+        let resp = await fetch(GoWasmBuilder.apiRoot + "/api/v1/compile", {
             method: 'POST',
             headers: {
                 'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
@@ -49,4 +49,11 @@ window.GoWasmBuilder = {
 
         return codeObj
     }
+}
+
+if (window.location.href.includes("localhost")){
+    GoWasmBuilder.apiRoot = "http://localhost:3000";
+}
+else {
+    GoWasmBuilder.apiRoot = "https://gowasm-elevatorsaga.leclouddev.com";
 }
