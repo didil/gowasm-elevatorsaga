@@ -191,7 +191,9 @@ $(function() {
             }
         });
 
-        var codeObj = editor.getCodeObj();
+       // var codeObj = editor.getCodeObj();
+       var codeObj = window.codeObj;
+
         console.log("Starting...");
         app.worldController.start(app.world, codeObj, window.requestAnimationFrame, autoStart);
     };

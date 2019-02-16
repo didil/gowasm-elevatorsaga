@@ -30,6 +30,22 @@
     <script type="text/javascript" src="challenges.js"></script>
     <script type="text/javascript" src="fitness.js"></script>
     <script type="text/javascript" src="app.js"></script>
+	<script src="gowasm/wasm_exec.js"></script>
+	<script>
+		if (!WebAssembly.instantiateStreaming) { // polyfill
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+
+		const go = new Go();
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("gowasm/app.wasm"), go.importObject).then((result) => {
+			mod = result.module;
+			inst = result.instance;
+		});
+	</script>
 
 
     <script type="text/template" id="user-template">
