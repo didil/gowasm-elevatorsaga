@@ -9,6 +9,9 @@ The elevator programming game, modified to accept GO WASM input:
 
 **Only tested on Chrome v71+ !**
 
+TODO: 
+- try out tinygo
+
 [Play it now!](https://didil.github.io/gowasm-elevatorsaga/)
 
 ![Image of Elevator Saga in browser](https://raw.githubusercontent.com/didil/gowasm-elevatorsaga/master/images/screenshot.png)
