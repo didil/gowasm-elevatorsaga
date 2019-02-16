@@ -1,10 +1,7 @@
-Elevator Saga
+GO WASM Elevator Saga
 ===================
-The elevator programming game
+The elevator programming game, modified to accept GO WASM input
 
-[Play it now!](http://play.elevatorsaga.com/)
-
-Or [Run the unit tests](http://play.elevatorsaga.com/test/)
-Please report any test failures as an issue.
+[Play it now!](https://didil.github.io/gowasm-elevatorsaga/)
 
 ![Image of Elevator Saga in browser](https://raw.githubusercontent.com/magwo/elevatorsaga/master/images/screenshot.png)
