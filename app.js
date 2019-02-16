@@ -1,5 +1,5 @@
 
-var createEditor = function() {
+var createEditor = function () {
     var lsKey = "elevatorCrushCode_v5";
 
     var cm = CodeMirror.fromTextArea(document.getElementById("code"), {
@@ -7,11 +7,11 @@ var createEditor = function() {
         indentUnit: 4,
         indentWithTabs: false,
         theme: "solarized light",
-        mode: "javascript",
+        mode: "go",
         autoCloseBrackets: true,
         extraKeys: {
             // the following Tab key mapping is from http://codemirror.net/doc/manual.html#keymaps
-            Tab: function(cm) {
+            Tab: function (cm) {
                 var spaces = new Array(cm.getOption("indentUnit") + 1).join(" ");
                 cm.replaceSelection(spaces);
             }
@@ -19,8 +19,8 @@ var createEditor = function() {
     });
 
     // reindent on paste (adapted from https://github.com/ahuth/brackets-paste-and-indent/blob/master/main.js)
-    cm.on("change", function(codeMirror, change) {
-        if(change.origin !== "paste") {
+    cm.on("change", function (codeMirror, change) {
+        if (change.origin !== "paste") {
             return;
         }
 
@@ -28,8 +28,8 @@ var createEditor = function() {
         var lineTo = change.from.line + change.text.length;
 
         function reindentLines(codeMirror, lineFrom, lineTo) {
-            codeMirror.operation(function() {
-                codeMirror.eachLine(lineFrom, lineTo, function(lineHandle) {
+            codeMirror.operation(function () {
+                codeMirror.eachLine(lineFrom, lineTo, function (lineHandle) {
                     codeMirror.indentLine(lineHandle.lineNo(), "smart");
                 });
             });
@@ -38,37 +38,37 @@ var createEditor = function() {
         reindentLines(codeMirror, lineFrom, lineTo);
     });
 
-    var reset = function() {
+    var reset = function () {
         cm.setValue($("#default-elev-implementation").text().trim());
     };
-    var saveCode = function() {
+    var saveCode = function () {
         localStorage.setItem(lsKey, cm.getValue());
         $("#save_message").text("Code saved " + new Date().toTimeString());
         returnObj.trigger("change");
     };
 
     var existingCode = localStorage.getItem(lsKey);
-    if(existingCode) {
+    if (existingCode) {
         cm.setValue(existingCode);
     } else {
         reset();
     }
 
-    $("#button_save").click(function() {
+    $("#button_save").click(function () {
         saveCode();
         cm.focus();
     });
 
-    $("#button_reset").click(function() {
-        if(confirm("Do you really want to reset to the default implementation?")) {
+    $("#button_reset").click(function () {
+        if (confirm("Do you really want to reset to the default implementation?")) {
             localStorage.setItem("develevateBackupCode", cm.getValue());
             reset();
         }
         cm.focus();
     });
 
-    $("#button_resetundo").click(function() {
-        if(confirm("Do you want to bring back the code as before the last reset?")) {
+    $("#button_resetundo").click(function () {
+        if (confirm("Do you want to bring back the code as before the last reset?")) {
             cm.setValue(localStorage.getItem("develevateBackupCode") || "");
         }
         cm.focus();
@@ -76,49 +76,50 @@ var createEditor = function() {
 
     var returnObj = riot.observable({});
     var autoSaver = _.debounce(saveCode, 1000);
-    cm.on("change", function() {
+    cm.on("change", function () {
         autoSaver();
     });
 
-    returnObj.getCodeObj = function() {
+    returnObj.getCodeObj = function () {
         console.log("Getting code...");
         var code = cm.getValue();
-        var obj;
-        try {
-            obj = getCodeObjFromCode(code);
+
+        return GoWasmBuilder.getCodeObjFromCode(code).then((codeObj) => {
             returnObj.trigger("code_success");
-        } catch(e) {
-            returnObj.trigger("usercode_error", e);
-            return null;
-        }
-        return obj;
+            return codeObj;
+        }).catch((err) => {
+            returnObj.trigger("usercode_error", err);
+            return Promise.reject(err)
+        })
     };
-    returnObj.setCode = function(code) {
+    returnObj.setCode = function (code) {
         cm.setValue(code);
     };
-    returnObj.getCode = function() {
+    returnObj.getCode = function () {
         return cm.getValue();
     }
-    returnObj.setDevTestCode = function() {
+    returnObj.setDevTestCode = function () {
         cm.setValue($("#devtest-elev-implementation").text().trim());
     }
 
-    $("#button_apply").click(function() {
+    $("#button_apply").click(function () {
+        $(this).attr("disabled", true)
+        $("#building_message").text("Building Code ...");
         returnObj.trigger("apply_code");
     });
     return returnObj;
 };
 
 
-var createParamsUrl = function(current, overrides) {
-    return "#" + _.map(_.merge(current, overrides), function(val, key) {
+var createParamsUrl = function (current, overrides) {
+    return "#" + _.map(_.merge(current, overrides), function (val, key) {
         return key + "=" + val;
     }).join(",");
 };
 
 
 
-$(function() {
+$(function () {
     var tsKey = "elevatorTimeScale";
     var editor = createEditor();
 
@@ -140,7 +141,7 @@ $(function() {
 
     var app = riot.observable({});
     app.worldController = createWorldController(1.0 / 60.0);
-    app.worldController.on("usercode_error", function(e) {
+    app.worldController.on("usercode_error", function (e) {
         console.log("World raised code error", e);
         editor.trigger("usercode_error", e);
     });
@@ -151,16 +152,16 @@ $(function() {
 
     app.currentChallengeIndex = 0;
 
-    app.startStopOrRestart = function() {
-        if(app.world.challengeEnded) {
+    app.startStopOrRestart = function () {
+        if (app.world.challengeEnded) {
             app.startChallenge(app.currentChallengeIndex);
         } else {
             app.worldController.setPaused(!app.worldController.isPaused);
         }
     };
 
-    app.startChallenge = function(challengeIndex, autoStart) {
-        if(typeof app.world !== "undefined") {
+    app.startChallenge = async function (challengeIndex, autoStart) {
+        if (typeof app.world !== "undefined") {
             app.world.unWind();
             // TODO: Investigate if memory leaks happen here
         }
@@ -173,41 +174,53 @@ $(function() {
         presentChallenge($challenge, challenges[challengeIndex], app, app.world, app.worldController, challengeIndex + 1, challengeTempl);
         presentWorld($world, app.world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl);
 
-        app.worldController.on("timescale_changed", function() {
+        app.worldController.on("timescale_changed", function () {
             localStorage.setItem(tsKey, app.worldController.timeScale);
             presentChallenge($challenge, challenges[challengeIndex], app, app.world, app.worldController, challengeIndex + 1, challengeTempl);
         });
 
-        app.world.on("stats_changed", function() {
+        app.world.on("stats_changed", function () {
             var challengeStatus = challenges[challengeIndex].condition.evaluate(app.world);
-            if(challengeStatus !== null) {
+            if (challengeStatus !== null) {
                 app.world.challengeEnded = true;
                 app.worldController.setPaused(true);
-                if(challengeStatus) {
-                    presentFeedback($feedback, feedbackTempl, app.world, "Success!", "Challenge completed", createParamsUrl(params, { challenge: (challengeIndex + 2)}));
+                if (challengeStatus) {
+                    presentFeedback($feedback, feedbackTempl, app.world, "Success!", "Challenge completed", createParamsUrl(params, { challenge: (challengeIndex + 2) }));
                 } else {
                     presentFeedback($feedback, feedbackTempl, app.world, "Challenge failed", "Maybe your program needs an improvement?", "");
                 }
             }
         });
 
-       // var codeObj = editor.getCodeObj();
-       var codeObj = window.codeObj;
-
-        console.log("Starting...");
-        app.worldController.start(app.world, codeObj, window.requestAnimationFrame, autoStart);
+        if (autoStart) {
+            try {
+                let codeObj = await editor.getCodeObj()
+                $("#button_apply").attr("disabled", false)
+                $("#building_message").text("");
+                console.log("Starting...");
+                app.worldController.start(app.world, codeObj, window.requestAnimationFrame, autoStart);
+            }
+            catch (err) {
+                $("#button_apply").attr("disabled", false)
+                $("#building_message").text("");
+                throw err
+            }
+        }
+        else {
+            app.worldController.start(app.world, {}, window.requestAnimationFrame, autoStart);
+        }
     };
 
-    editor.on("apply_code", function() {
+    editor.on("apply_code", function () {
         app.startChallenge(app.currentChallengeIndex, true);
     });
-    editor.on("code_success", function() {
+    editor.on("code_success", function () {
         presentCodeStatus($codestatus, codeStatusTempl);
     });
-    editor.on("usercode_error", function(error) {
+    editor.on("usercode_error", function (error) {
         presentCodeStatus($codestatus, codeStatusTempl, error);
     });
-    editor.on("change", function() {
+    editor.on("change", function () {
         $("#fitness_message").addClass("faded");
         var codeStr = editor.getCode();
         // fitnessSuite(codeStr, true, function(results) {
@@ -222,29 +235,29 @@ $(function() {
     });
     editor.trigger("change");
 
-    riot.route(function(path) {
-        params = _.reduce(path.split(","), function(result, p) {
+    riot.route(function (path) {
+        params = _.reduce(path.split(","), function (result, p) {
             var match = p.match(/(\w+)=(\w+$)/);
-            if(match) { result[match[1]] = match[2]; } return result;
+            if (match) { result[match[1]] = match[2]; } return result;
         }, {});
         var requestedChallenge = 0;
         var autoStart = false;
         var timeScale = parseFloat(localStorage.getItem(tsKey)) || 2.0;
-        _.each(params, function(val, key) {
-            if(key === "challenge") {
+        _.each(params, function (val, key) {
+            if (key === "challenge") {
                 requestedChallenge = _.parseInt(val) - 1;
-                if(requestedChallenge < 0 || requestedChallenge >= challenges.length) {
+                if (requestedChallenge < 0 || requestedChallenge >= challenges.length) {
                     console.log("Invalid challenge index", requestedChallenge);
                     console.log("Defaulting to first challenge");
                     requestedChallenge = 0;
                 }
-            } else if(key === "autostart") {
+            } else if (key === "autostart") {
                 autoStart = val === "false" ? false : true;
-            } else if(key === "timescale") {
+            } else if (key === "timescale") {
                 timeScale = parseFloat(val);
-            } else if(key === "devtest") {
+            } else if (key === "devtest") {
                 editor.setDevTestCode();
-            } else if(key === "fullscreen") {
+            } else if (key === "fullscreen") {
                 makeDemoFullscreen();
             }
         });
