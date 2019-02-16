@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Elevator Saga - the elevator programming game</title>
+    <title>Go Wasm Elevator Saga - the elevator programming game</title>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="font-awesome-4.1-1.0/css/font-awesome.min.css" type="text/css" media="all">
     <link href='//fonts.googleapis.com/css?family=Oswald:400,700,300' rel='stylesheet' type='text/css'>
@@ -15,10 +15,12 @@
 
     <script type="text/javascript" src="libs/codemirror/codemirror.js"></script>
     <script type="text/javascript" src="libs/codemirror/addon/edit/closebrackets.js"></script>
-    <script type="text/javascript" src="libs/codemirror/mode/javascript/javascript.js"></script>
+    <script type="text/javascript" src="libs/codemirror/mode/go/go.js"></script>
 
     <script type="text/javascript" src="libs/unobservable.js"></script>
 
+    <script type="text/javascript" src="gowasm/wasm_exec.js"></script>
+	<script type="text/javascript" src="gowasmbuilder.js"></script>
     <script type="text/javascript" src="base.js"></script>
     <script type="text/javascript" src="movable.js"></script>
     <script type="text/javascript" src="floor.js"></script>
@@ -30,6 +32,7 @@
     <script type="text/javascript" src="challenges.js"></script>
     <script type="text/javascript" src="fitness.js"></script>
     <script type="text/javascript" src="app.js"></script>
+
 
 
     <script type="text/template" id="user-template">
@@ -84,53 +87,60 @@
     </script>
 
     <script type="text/plain" id="default-elev-implementation">
-{
-    init: function(elevators, floors) {
-        var elevator = elevators[0]; // Let's use the first elevator
+package main
 
-        // Whenever the elevator is idle (has no more queued destinations) ...
-        elevator.on("idle", function() {
-            // let's go to all the floors (or did we forget one?)
-            elevator.goToFloor(0);
-            elevator.goToFloor(1);
-        });
-    },
-    update: function(dt, elevators, floors) {
-        // We normally don't need to do anything here
-    }
+import (
+    "syscall/js"
+)
+
+func Init(args []js.Value) {
+    elevators := args[0]
+    //floors := args[1]
+
+    elevator := elevators.Index(0) // Let's use the first elevator
+
+    // Whenever the elevator is idle (has no more queued destinations) ...
+    idleCb := js.NewCallback(func(args []js.Value) {
+        // let's go to all the floors (or did we forget one?)
+        elevator.Call("goToFloor", 0)
+        elevator.Call("goToFloor", 2)
+    })
+
+    // Attach callback
+    elevator.Call("on", "idle", idleCb)
 }
+
+func Update(args []js.Value) {
+    // We normally don't need to do anything here
+} 
     </script>
     <script type="text/plain" id="devtest-elev-implementation">
-{
-    init: function(elevators, floors) {
-        var selectElevatorForFloorPickup = function(floorNum) {
-            return _.max(elevators, function(e) {
-                return (_.contains(e.destinationQueue, floorNum) ? 4 : 0) +
-                    (-e.destinationQueue.length*e.destinationQueue.length) +
-                    (-e.loadFactor()*e.loadFactor() * 3);
-            });
-        };
+package main
 
-        _.each(floors, function(floor) {
-            floor.on("down_button_pressed up_button_pressed", function() {
-                var elevator = selectElevatorForFloorPickup(floor.level);
-                if(!_.contains(elevator.destinationQueue, floor.level)) {
-                    elevator.goToFloor(floor.level);
-                }
-            });
-        });
-        _.each(elevators, function(elevator) {
-            elevator.on("floor_button_pressed", function(floorNum) {
-                elevator.goToFloor(floorNum);
-            });
-            elevator.on("idle", function() {
-                elevator.goToFloor(0);
-            });
-        });
-    },
-    update: function(dt, elevators, floors) {
-    }
+import (
+    "syscall/js"
+)
+
+func Init(args []js.Value) {
+    elevators := args[0]
+    //floors := args[1]
+
+    elevator := elevators.Index(0) // Let's use the first elevator
+
+    // Whenever the elevator is idle (has no more queued destinations) ...
+    idleCb := js.NewCallback(func(args []js.Value) {
+        // let's go to all the floors (or did we forget one?)
+        elevator.Call("goToFloor", 0)
+        elevator.Call("goToFloor", 2)
+    })
+
+    // Attach callback
+    elevator.Call("on", "idle", idleCb)
 }
+
+func Update(args []js.Value) {
+    // We normally don't need to do anything here
+} 
     </script>
 
 
@@ -138,7 +148,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="left">Elevator Saga <em class="emphasis-color">The elevator programming game</em></h1>
+            <h1 class="left">Go Wasm Elevator Saga <em class="emphasis-color">The elevator programming game</em></h1>
             <a class="right" href="https://github.com/magwo/elevatorsaga/wiki/">Wiki & Solutions</a>
             <a class="right" href="documentation.html#docs">Documentation</a>
             <a class="right" href="documentation.html">Help</a>
@@ -173,6 +183,7 @@
         <button id="button_resetundo" style="float: left">Undo reset</button>
         <button id="button_apply" style="float: right">Apply</button>
         <button id="button_save" style="float: right">Save</button>
+        <span id="building_message" style="float: right"></span>
         <span id="save_message" style="float: right"></span>
         <span id="fitness_message" style="float: right"></span>
         <div style="clear:both;"></div>
@@ -181,21 +192,10 @@
             <h3>Confused? Open the <a href="documentation.html">Help and API documentation</a> page</h3>
         </div>
         <div class="footer">
-            <h4>Made by Magnus Wolffelt and contributors</h4>
-            <h4>Version <span class="emphasis-color">1.6.5</span></h4>
-            <h4><a href="https://github.com/magwo/elevatorsaga">Source code</a> on GitHub</h4>
-            <h4><a href="test/index.html">Run tests</a></h4>
+            <h4>Go Wasm Version Made by <a href="https://github.com/didil">Adil H</a></h4>
+            <h4>Original JS Version Made by Magnus Wolffelt and contributors</h4>
+            <h4><a href="https://github.com/didil/gowasm-elevatorsaga">Source code</a> on GitHub</h4>
         </div>
     </div>
-
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-        ga('create', 'UA-56810935-1', 'auto');
-        ga('send', 'pageview');
-    </script>
 </body>
 </html>

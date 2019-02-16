@@ -107,7 +107,7 @@ button.right {
     opacity: 0.4;
 }
 
-#save_message, #fitness_message {
+#save_message, #fitness_message, #building_message{
     color: #555;
     font-size: 12px;
     line-height: 30px;
@@ -161,7 +161,7 @@ button.right {
     font: 14px Consolas, Monaco, monospace;
     width: 1220px;
     margin: 10px auto;
-    height: 320px;
+    height: 380px;
 }
 
 .world {
