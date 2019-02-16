@@ -6,7 +6,9 @@ The elevator programming game, modified to accept GO WASM input:
 - An API server builds the wasm binary in a docker container
 - The wasm binary is returned to the browser and loaded
 - JS calls the wasm code and runs the solution
-  
+
+**Only tested on Chrome v71+ !**
+
 [Play it now!](https://didil.github.io/gowasm-elevatorsaga/)
 
-![Image of Elevator Saga in browser](https://raw.githubusercontent.com/magwo/elevatorsaga/master/images/screenshot.png)
+![Image of Elevator Saga in browser](https://raw.githubusercontent.com/didil/gowasm-elevatorsaga/master/images/screenshot.png)
