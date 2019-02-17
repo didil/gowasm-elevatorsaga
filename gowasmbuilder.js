@@ -19,7 +19,8 @@ window.GoWasmBuilder = {
             method: 'POST',
             headers: {
                 'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
-                'Content-Type': 'application/json'
+                'Accept-Encoding': 'gzip',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({ compiler: "go1.11.5", input: code, })
         })
