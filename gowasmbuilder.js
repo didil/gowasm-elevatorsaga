@@ -15,14 +15,17 @@ window.GoWasmBuilder = {
         GoWasmBuilder.go.run(GoWasmBuilder.inst)
     },
     async getCodeObjFromCode(code) {
+        let json = JSON.stringify({ compiler: "go1.11.5", input: code, })
+        var hash = SparkMD5.hash(json); 
         let resp = await fetch(GoWasmBuilder.apiRoot + "/api/v1/compile", {
             method: 'POST',
             headers: {
                 'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
                 'Accept-Encoding': 'gzip',
                 'Content-Type': 'application/json',
+                'Code-Hash': hash,
             },
-            body: JSON.stringify({ compiler: "go1.11.5", input: code, })
+            body: json
         })
 
         if (!resp.ok){
