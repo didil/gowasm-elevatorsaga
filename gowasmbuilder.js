@@ -5,6 +5,7 @@ window.GoWasmBuilder = {
     inst: null,
     apiRoot: null,
     async init(bytes) {
+        // load the go module
         GoWasmBuilder.go = new Go();
 
         let result = await WebAssembly.instantiate(bytes, GoWasmBuilder.go.importObject);
@@ -12,11 +13,15 @@ window.GoWasmBuilder = {
         GoWasmBuilder.inst = result.instance;
     },
     run() {
+        // run the go module
         GoWasmBuilder.go.run(GoWasmBuilder.inst)
     },
     async getCodeObjFromCode(code) {
+        // build json input
         let json = JSON.stringify({ compiler: "go1.11.5", input: code, })
+        // hash json input
         var hash = SparkMD5.hash(json); 
+        // perform POST request
         let resp = await fetch(GoWasmBuilder.apiRoot + "/api/v1/compile", {
             method: 'POST',
             headers: {
@@ -40,9 +45,11 @@ window.GoWasmBuilder = {
             GoWasmBuilder.exitWasm = null
         }
 
+        // init module and run
         await GoWasmBuilder.init(bytes)
-
         GoWasmBuilder.run()
+
+        // get result object
         let codeObj = GoWasmBuilder.codeObj
         if (typeof codeObj.init !== "function") {
             throw new Error("Code must contain an init function");

@@ -38,6 +38,7 @@ type compileRequest struct {
 	Input    string `json:"input,omitempty"`
 }
 
+// http handler
 func handleCompile(w http.ResponseWriter, r *http.Request) {
 	cRequest := &compileRequest{}
 	err := json.NewDecoder(r.Body).Decode(cRequest)
@@ -74,6 +75,7 @@ func handleErr(w http.ResponseWriter, err error) {
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 
+// create source files
 func createSourceFiles(cRequest *compileRequest) (string, error) {
 	dir, err := ioutil.TempDir("/tmp/", "gowasmbuilder-")
 	if err != nil {
@@ -113,6 +115,7 @@ func createSourceFiles(cRequest *compileRequest) (string, error) {
 	return dir, nil
 }
 
+// compile wasm using Docker API
 func runCompile(dir string) error {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
