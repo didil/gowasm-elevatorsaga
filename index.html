@@ -106,7 +106,7 @@ func Init(args []js.Value) {
     idleCb := js.NewCallback(func(args []js.Value) {
         // let's go to all the floors (or did we forget one?)
         elevator.Call("goToFloor", 0)
-        elevator.Call("goToFloor", 2)
+        elevator.Call("goToFloor", 1)
     })
 
     // Attach callback
@@ -134,7 +134,7 @@ func Init(args []js.Value) {
     idleCb := js.NewCallback(func(args []js.Value) {
         // let's go to all the floors (or did we forget one?)
         elevator.Call("goToFloor", 0)
-        elevator.Call("goToFloor", 2)
+        elevator.Call("goToFloor", 1)
     })
 
     // Attach callback

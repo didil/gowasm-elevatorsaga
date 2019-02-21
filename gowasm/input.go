@@ -15,7 +15,6 @@ func Init(args []js.Value) {
 	idleCb := js.NewCallback(func(args []js.Value) {
 		elevator.Call("goToFloor", 0)
 		elevator.Call("goToFloor", 1)
-		elevator.Call("goToFloor", 2)
 	})
 
 	// Attach callback
