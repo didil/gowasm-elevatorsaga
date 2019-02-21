@@ -20,7 +20,7 @@ window.GoWasmBuilder = {
         // build json input
         let json = JSON.stringify({ compiler: "go1.11.5", input: code, })
         // hash json input
-        var hash = SparkMD5.hash(json); 
+        let hash = SparkMD5.hash(json); 
         // perform POST request
         let resp = await fetch(GoWasmBuilder.apiRoot + "/api/v1/compile", {
             method: 'POST',
