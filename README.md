@@ -8,6 +8,8 @@ The [elevator programming game](https://github.com/magwo/elevatorsaga), modified
 - The wasm binary is returned to the browser and loaded
 - Frontend JS calls the wasm code and runs the solution
 
+Intro Article: [Practice your Go WebAssembly with a Game](https://medium.com/@didil/practice-your-go-webassembly-with-a-game-7195dabbfc44)
+
 **Only tested on Chrome v71+ !**
 
 TODO: 
